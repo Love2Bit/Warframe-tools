@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "WebFetch(domain:wiki.warframe.com)",
+      "Bash(curl -s \"https://wiki.warframe.com/w/Neo_V10\")",
+      "Bash(curl -s \"https://wiki.warframe.com/w/Meso_V3\")",
+      "Bash(curl -s \"https://wiki.warframe.com/w/Lith_A1\")",
+      "Bash(curl -s \"https://wiki.warframe.com/w/Neo_A11\")",
+      "Bash(curl -s -L \"https://wiki.warframe.com/w/Module:Void/data?action=raw\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Vaulted_Relics&cmlimit=500&format=json\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(len\\(d.get\\('query',{}\\).get\\('categorymembers',[]\\)\\), 'vaulted relics'\\); [print\\(m['title']\\) for m in d['query']['categorymembers'][:10]]\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Relic&cmtype=page&cmlimit=500&format=json\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(len\\(d.get\\('query',{}\\).get\\('categorymembers',[]\\)\\)\\); print\\([m['title'] for m in d.get\\('query',{}\\).get\\('categorymembers',[]\\)[:10]]\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Relic&cmtype=page&cmlimit=500&cmcontinue=page|500|Axi_N9&format=json\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(len\\(d.get\\('query',{}\\).get\\('categorymembers',[]\\)\\)\\); print\\(d.get\\('continue'\\)\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Vaulted_Relics&cmlimit=500&cmcontinue=page|500|Axi_A9&format=json\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(len\\(d.get\\('query',{}\\).get\\('categorymembers',[]\\)\\), 'more'\\); print\\(d.get\\('continue'\\)\\)\")",
+      "Bash(curl -s -I \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Vaulted_Relics&cmlimit=1&format=json\")"
+    ]
+  }
+}
