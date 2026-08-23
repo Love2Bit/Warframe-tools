@@ -15,7 +15,8 @@
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(len\\(d.get\\('query',{}\\).get\\('categorymembers',[]\\)\\)\\); print\\(d.get\\('continue'\\)\\)\")",
       "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Vaulted_Relics&cmlimit=500&cmcontinue=page|500|Axi_A9&format=json\")",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(len\\(d.get\\('query',{}\\).get\\('categorymembers',[]\\)\\), 'more'\\); print\\(d.get\\('continue'\\)\\)\")",
-      "Bash(curl -s -I \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Vaulted_Relics&cmlimit=1&format=json\")"
+      "Bash(curl -s -I \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Vaulted_Relics&cmlimit=1&format=json\")",
+      "Bash(python -c \"import requests; d=requests.get\\('https://wiki.warframe.com/api.php',params={'action':'query','list':'categorymembers','cmtitle':'Category:Relic','cmtype':'page','cmlimit':500,'format':'json'}\\).json\\(\\); print\\([x['title'] for x in d['query']['categorymembers'] if x['title'].startswith\\('Lith A3'\\) or x['title'].startswith\\('Lith Q3'\\)]\\)\")"
     ]
   }
 }

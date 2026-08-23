@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Warframe Relic Vault Checker</title>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
 
@@ -309,6 +310,161 @@
         .footer a { color: #666; text-decoration: none; }
         .footer a:hover { color: #f5a623; }
 
+        /* OCR Tab */
+        .drop-zone {
+            border: 2px dashed #333;
+            border-radius: 10px;
+            padding: 2.5rem 1rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #14141e;
+            position: relative;
+        }
+
+        .drop-zone:hover, .drop-zone.dragover {
+            border-color: #f5a623;
+            background: #1a1a2e;
+        }
+
+        .drop-zone-icon { font-size: 2.5rem; margin-bottom: 0.5rem; }
+        .drop-zone-text { color: #888; font-size: 0.9rem; margin-bottom: 0.3rem; }
+        .drop-zone-hint { color: #555; font-size: 0.75rem; }
+        .drop-zone input[type="file"] {
+            position: absolute;
+            inset: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .ocr-preview {
+            margin-top: 1rem;
+            border-radius: 8px;
+            overflow: hidden;
+            max-height: 200px;
+            display: none;
+        }
+
+        .ocr-preview img {
+            width: 100%;
+            height: auto;
+            display: block;
+            object-fit: contain;
+            max-height: 200px;
+        }
+
+        .ocr-progress {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .ocr-progress-bar {
+            width: 100%;
+            height: 6px;
+            background: #222;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+
+        .ocr-progress-fill {
+            height: 100%;
+            background: #f5a623;
+            border-radius: 3px;
+            width: 0%;
+            transition: width 0.3s;
+        }
+
+        .ocr-progress-text {
+            font-size: 0.8rem;
+            color: #888;
+            margin-top: 0.4rem;
+            text-align: center;
+        }
+
+        .ocr-raw {
+            margin-top: 1rem;
+            padding: 0.8rem;
+            background: #0d0d14;
+            border: 1px solid #222;
+            border-radius: 8px;
+            font-family: 'Consolas', 'Courier New', monospace;
+            font-size: 0.8rem;
+            color: #888;
+            white-space: pre-wrap;
+            word-break: break-all;
+            max-height: 120px;
+            overflow-y: auto;
+            display: none;
+        }
+
+        .ocr-extracted {
+            margin-top: 1rem;
+            display: none;
+        }
+
+        .ocr-extracted-label {
+            font-size: 0.8rem;
+            color: #888;
+            margin-bottom: 0.5rem;
+        }
+
+        .ocr-tag-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.4rem;
+            margin-bottom: 1rem;
+        }
+
+        .ocr-tag {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.4rem;
+            padding: 0.3rem 0.7rem;
+            background: #1a1a2e;
+            border: 1px solid #333;
+            border-radius: 6px;
+            font-size: 0.8rem;
+            color: #e0e0e0;
+        }
+
+        .ocr-tag.matched { border-color: #4caf5044; }
+        .ocr-tag.unmatched { border-color: #ff980044; }
+        .ocr-tag.ambiguous { border-color: #f5a62388; background: #f5a62312; }
+        .ocr-candidates {
+            display: block;
+            width: 100%;
+            margin-top: 0.35rem;
+            color: #aaa;
+            font-size: 0.72rem;
+        }
+        .ocr-candidate {
+            border: 0;
+            border-radius: 4px;
+            padding: 2px 6px;
+            margin: 2px;
+            color: #f5a623;
+            background: #f5a62318;
+            cursor: pointer;
+        }
+        .ocr-candidate:hover { background: #f5a62335; }
+        .ocr-condition {
+            display: inline-block;
+            font-size: 0.65rem;
+            padding: 1px 5px;
+            border-radius: 3px;
+            margin: 0 2px;
+            background: rgba(168, 85, 247, 0.15);
+        }
+
+        .ocr-tag-remove {
+            cursor: pointer;
+            color: #666;
+            font-size: 0.9rem;
+            line-height: 1;
+        }
+
+        .ocr-tag-remove:hover { color: #f44336; }
+
         @media (max-width: 480px) {
             body { padding: 1rem 0.5rem; }
             h1 { font-size: 1.4rem; }
@@ -332,6 +488,7 @@
         <div class="tab-bar">
             <button class="tab-btn active" onclick="switchTab('single')">Single Check</button>
             <button class="tab-btn" onclick="switchTab('batch')">Batch Check</button>
+            <button class="tab-btn" onclick="switchTab('ocr')">Screenshot OCR</button>
         </div>
 
         <div class="tab-content active" id="tab-single">
@@ -354,6 +511,31 @@
             <textarea id="batchInput" placeholder="Neo V10&#10;Lith A1&#10;Axi S3&#10;Meso F2" disabled></textarea>
             <button class="btn" id="batchBtn" onclick="checkBatch()" disabled style="margin-top: 1rem;">Check All</button>
             <div class="batch-results" id="batchResults"></div>
+        </div>
+
+        <div class="tab-content" id="tab-ocr">
+            <div class="drop-zone" id="dropZone">
+                <input type="file" id="ocrFile" accept="image/*">
+                <div class="drop-zone-icon">📸</div>
+                <div class="drop-zone-text">Drop a screenshot or click to upload</div>
+                <div class="drop-zone-hint">Supports PNG, JPG — Warframe inventory screenshots</div>
+            </div>
+            <div class="ocr-preview" id="ocrPreview">
+                <img id="ocrPreviewImg" src="" alt="Preview">
+            </div>
+            <div class="ocr-progress" id="ocrProgress">
+                <div class="ocr-progress-bar">
+                    <div class="ocr-progress-fill" id="ocrProgressFill"></div>
+                </div>
+                <div class="ocr-progress-text" id="ocrProgressText">Initializing OCR...</div>
+            </div>
+            <div class="ocr-raw" id="ocrRaw"></div>
+            <div class="ocr-extracted" id="ocrExtracted">
+                <div class="ocr-extracted-label">Detected relics (click × to remove, then check):</div>
+                <div class="ocr-tag-list" id="ocrTagList"></div>
+                <button class="btn" onclick="checkOCRBatch()">Check Detected Relics</button>
+            </div>
+            <div class="batch-results" id="ocrResults"></div>
         </div>
 
         <div class="footer">
@@ -438,7 +620,10 @@ function switchTab(tab) {
     document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
 
     document.getElementById(`tab-${tab}`).classList.add('active');
-    event.target.classList.add('active');
+
+    const tabs = ['single', 'batch', 'ocr'];
+    const idx = tabs.indexOf(tab);
+    document.querySelectorAll('.tab-btn')[idx].classList.add('active');
 }
 
 // --- Autocomplete ---
@@ -570,6 +755,58 @@ function findRelic(input) {
     return partial || null;
 }
 
+// --- Levenshtein Distance ---
+function levenshtein(a, b) {
+    const la = a.length, lb = b.length;
+    const dp = Array.from({ length: la + 1 }, () => Array(lb + 1).fill(0));
+    for (let i = 0; i <= la; i++) dp[i][0] = i;
+    for (let j = 0; j <= lb; j++) dp[0][j] = j;
+    for (let i = 1; i <= la; i++) {
+        for (let j = 1; j <= lb; j++) {
+            const cost = a[i - 1] === b[j - 1] ? 0 : 1;
+            dp[i][j] = Math.min(dp[i - 1][j] + 1, dp[i][j - 1] + 1, dp[i - 1][j - 1] + cost);
+        }
+    }
+    return dp[la][lb];
+}
+
+// --- Fuzzy Match Relic (for OCR correction) ---
+// Returns { name, original, corrected, candidates } or null
+function fuzzyMatchRelic(name) {
+    // First try exact/case-insensitive match
+    const exact = findRelic(name);
+    if (exact) {
+        return { name: exact, original: name, corrected: false, ambiguous: false, candidates: [] };
+    }
+
+    // No exact match — OCR likely misread a character.
+    // Find closest match(es) within edit distance 1 of the suffix (letter+number part).
+    const nameLower = name.toLowerCase();
+    const tierMatch = nameLower.match(/^(axi|lith|meso|neo)\s+(.+)/);
+    const tier = tierMatch ? tierMatch[1] : null;
+    const suffix = tierMatch ? tierMatch[2] : nameLower;
+
+    const candidates = allRelics
+        .filter(r => {
+            const rLower = r.toLowerCase();
+            if (tier && !rLower.startsWith(tier)) return false;
+            const rSuffix = tier ? rLower.slice(tier.length).trim() : rLower;
+            return levenshtein(rSuffix, suffix) <= 1;
+        })
+        .sort((a, b) => {
+            const aSuffix = a.toLowerCase().replace(/^(axi|lith|meso|neo)\s+/i, '');
+            const bSuffix = b.toLowerCase().replace(/^(axi|lith|meso|neo)\s+/i, '');
+            return levenshtein(aSuffix, suffix) - levenshtein(bSuffix, suffix);
+        })
+        .slice(0, 3); // Max 3 candidates
+
+    if (candidates.length > 0) {
+        return { name: candidates[0], original: name, corrected: true, ambiguous: candidates.length > 1, candidates };
+    }
+
+    return null;
+}
+
 // --- Batch Check ---
 function checkBatch() {
     if (!loaded) return;
@@ -628,6 +865,262 @@ function checkBatch() {
             ${vaultedCount > 0 ? `<div><span style="color:#f44336">${vaultedCount}</span> vaulted</div>` : ''}
             ${activeCount > 0 ? `<div><span style="color:#4caf50">${activeCount}</span> active</div>` : ''}
             ${notFoundCount > 0 ? `<div><span style="color:#ff9800">${notFoundCount}</span> not found</div>` : ''}
+        </div>
+    `;
+}
+
+// --- OCR Screenshot Check ---
+let ocrDetectedRelics = [];
+
+const dropZone = document.getElementById('dropZone');
+const ocrFile = document.getElementById('ocrFile');
+
+dropZone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    dropZone.classList.add('dragover');
+});
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('dragover');
+    const file = e.dataTransfer.files[0];
+    if (file && file.type.startsWith('image/')) runOCR(file);
+});
+ocrFile.addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (file) runOCR(file);
+});
+
+async function preprocessImage(file) {
+    const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = reject;
+        img.src = URL.createObjectURL(file);
+    });
+
+    const scale = 2;
+    const canvas = document.createElement('canvas');
+    canvas.width = image.naturalWidth * scale;
+    canvas.height = image.naturalHeight * scale;
+    const ctx = canvas.getContext('2d', { willReadFrequently: true });
+    ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+
+    const pixels = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const data = pixels.data;
+    // Grayscale plus contrast enhancement helps separate gold lettering from the dark UI.
+    for (let i = 0; i < data.length; i += 4) {
+        const gray = 0.299 * data[i] + 0.587 * data[i + 1] + 0.114 * data[i + 2];
+        const contrast = Math.max(0, Math.min(255, (gray - 128) * 1.8 + 128));
+        data[i] = contrast;
+        data[i + 1] = contrast;
+        data[i + 2] = contrast;
+    }
+    ctx.putImageData(pixels, 0, 0);
+
+    return new Promise(resolve => canvas.toBlob(resolve, 'image/png'));
+}
+
+async function runOCR(file) {
+    if (!loaded) return;
+
+    // Show preview
+    const previewDiv = document.getElementById('ocrPreview');
+    const previewImg = document.getElementById('ocrPreviewImg');
+    previewDiv.style.display = 'block';
+    previewImg.src = URL.createObjectURL(file);
+
+    // Show progress
+    const progressDiv = document.getElementById('ocrProgress');
+    const progressFill = document.getElementById('ocrProgressFill');
+    const progressText = document.getElementById('ocrProgressText');
+    progressDiv.style.display = 'block';
+    progressFill.style.width = '10%';
+    progressText.textContent = 'Preprocessing image...';
+
+    // Preprocess image for better OCR accuracy on dark game screenshots
+    let ocrFile;
+    try {
+        ocrFile = await preprocessImage(file);
+    } catch {
+        ocrFile = file;
+    }
+
+    progressText.textContent = 'Loading OCR engine...';
+
+    // Hide previous results
+    document.getElementById('ocrRaw').style.display = 'none';
+    document.getElementById('ocrExtracted').style.display = 'none';
+    document.getElementById('ocrResults').innerHTML = '';
+
+    try {
+        const result = await Tesseract.recognize(ocrFile, 'eng', {
+            logger: (m) => {
+                if (m.status === 'recognizing text') {
+                    const pct = Math.round(m.progress * 100);
+                    progressFill.style.width = `${10 + pct * 0.85}%`;
+                    progressText.textContent = `Recognizing text... ${pct}%`;
+                }
+            }
+        });
+
+        progressFill.style.width = '100%';
+        progressText.textContent = 'Done!';
+
+        const text = result.data.text;
+
+        // Show raw OCR text
+        const rawDiv = document.getElementById('ocrRaw');
+        rawDiv.style.display = 'block';
+        rawDiv.textContent = text;
+
+        // Extract relic names from OCR text
+        ocrDetectedRelics = extractRelics(text);
+        showOCRTags();
+
+    } catch (err) {
+        progressText.textContent = `Error: ${err.message}`;
+        progressFill.style.width = '100%';
+        progressFill.style.background = '#f44336';
+    }
+}
+
+function extractRelics(text) {
+    const results = [];
+    const seen = new Set();
+    const lines = text.split(/\n/);
+    const relicPattern = /\b((?:Axi|Lith|Meso|Neo)\s+[A-Za-z]\d+(?:\s+Relic)?(?:\s*\[.*?\])?)\b/gi;
+
+    for (const line of lines) {
+        let match;
+        while ((match = relicPattern.exec(line)) !== null) {
+            // Extract condition before cleaning
+            const condMatch = match[1].match(/\[([^\]]+)\]/);
+            const condition = condMatch ? condMatch[1].trim() : null;
+
+            let name = match[1]
+                .replace(/\s*Relic\s*/gi, ' ')
+                .replace(/\s*\[.*?\]\s*/g, '')
+                .replace(/\s+/g, ' ')
+                .trim();
+            name = name.replace(/^(axi|lith|meso|neo)/i, m => m.charAt(0).toUpperCase() + m.slice(1).toLowerCase());
+            name = name.replace(/^(Axi|Lith|Meso|Neo)\s+([a-zA-Z])(\d+)/i, (_, tier, letter, num) => `${tier} ${letter.toUpperCase()}${num}`);
+
+            const result = fuzzyMatchRelic(name);
+            if (result && !seen.has(result.name)) {
+                seen.add(result.name);
+                results.push({ ...result, condition });
+            }
+        }
+    }
+    return results;
+}
+
+function showOCRTags() {
+    const tagList = document.getElementById('ocrTagList');
+    const extracted = document.getElementById('ocrExtracted');
+
+    if (ocrDetectedRelics.length === 0) {
+        extracted.style.display = 'none';
+        return;
+    }
+
+    extracted.style.display = 'block';
+    tagList.innerHTML = ocrDetectedRelics.map((r, i) => {
+        const isVaulted = vaultedSet.has(r.name);
+        const isCorrected = r.corrected;
+        const isAmbiguous = r.ambiguous;
+        const cls = isVaulted ? 'matched' : 'unmatched';
+        const borderCls = isAmbiguous ? ' ambiguous' : '';
+
+        let correctionNote = '';
+        if (isCorrected) {
+            correctionNote = `<span style="font-size:0.65rem; color:#f5a623">(was: ${r.original})</span>`;
+        }
+
+        let candidatesHtml = '';
+        if (isAmbiguous && r.candidates.length > 1) {
+            candidatesHtml = `<span class="ocr-candidates">Did you mean:
+                ${r.candidates.map((c, ci) =>
+                    `<button class="ocr-candidate" onclick="switchOCRCandidate(${i}, '${c}')">${c}</button>`
+                ).join('')}
+            </span>`;
+        }
+
+        let conditionHtml = '';
+        if (r.condition) {
+            const condLower = r.condition.toLowerCase();
+            const condColor = condLower === 'radiant' ? '#a855f7' : '#94a3b8';
+            conditionHtml = `<span class="ocr-condition" style="color:${condColor}">[${r.condition}]</span>`;
+        }
+
+        return `<span class="ocr-tag ${cls}${borderCls}">
+            ${r.name} ${conditionHtml}
+            <span style="font-size:0.65rem; color:${isVaulted ? '#f44336' : '#4caf50'}">${isVaulted ? 'VAULTED' : 'ACTIVE'}</span>
+            ${correctionNote}
+            <span class="ocr-tag-remove" onclick="removeOCRTag(${i})">×</span>
+            ${candidatesHtml}
+        </span>`;
+    }).join('');
+}
+
+function switchOCRCandidate(idx, newName) {
+    const old = ocrDetectedRelics[idx];
+    const result = fuzzyMatchRelic(newName);
+    if (result) {
+        ocrDetectedRelics[idx] = { ...result, corrected: false };
+        showOCRTags();
+    }
+}
+
+function removeOCRTag(idx) {
+    ocrDetectedRelics.splice(idx, 1);
+    showOCRTags();
+}
+
+function checkOCRBatch() {
+    if (ocrDetectedRelics.length === 0) return;
+
+    const lines = ocrDetectedRelics.map(r => r.name).join('\n');
+    document.getElementById('batchInput').value = lines;
+
+    let vaultedCount = 0;
+    let activeCount = 0;
+
+    const rows = ocrDetectedRelics.map(r => {
+        const isVaulted = vaultedSet.has(r.name);
+        if (isVaulted) vaultedCount++;
+        else activeCount++;
+        return {
+            display: r.name,
+            corrected: r.corrected,
+            original: r.original,
+            status: isVaulted ? 'vaulted' : 'active',
+            statusText: isVaulted ? 'Vaulted' : 'Active'
+        };
+    });
+
+    const resultsDiv = document.getElementById('ocrResults');
+    resultsDiv.innerHTML = `
+        <table>
+            <thead><tr><th>Relic</th><th>Status</th></tr></thead>
+            <tbody>
+                ${rows.map(r => `
+                    <tr>
+                        <td>
+                            <a href="https://wiki.warframe.com/w/${encodeURIComponent(r.display)}" target="_blank" style="color: #e0e0e0; text-decoration: none;">
+                                ${r.display}
+                            </a>
+                            ${r.corrected ? `<span style="font-size:0.7rem; color:#f5a623; margin-left:0.3rem">(was: ${r.original})</span>` : ''}
+                        </td>
+                        <td><span class="batch-badge ${r.status}">${r.statusText}</span></td>
+                    </tr>
+                `).join('')}
+            </tbody>
+        </table>
+        <div class="batch-stats">
+            ${vaultedCount > 0 ? `<div><span style="color:#f44336">${vaultedCount}</span> vaulted</div>` : ''}
+            ${activeCount > 0 ? `<div><span style="color:#4caf50">${activeCount}</span> active</div>` : ''}
         </div>
     `;
 }
