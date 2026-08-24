@@ -16,7 +16,30 @@
       "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Vaulted_Relics&cmlimit=500&cmcontinue=page|500|Axi_A9&format=json\")",
       "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(len\\(d.get\\('query',{}\\).get\\('categorymembers',[]\\)\\), 'more'\\); print\\(d.get\\('continue'\\)\\)\")",
       "Bash(curl -s -I \"https://wiki.warframe.com/api.php?action=query&list=categorymembers&cmtitle=Category:Vaulted_Relics&cmlimit=1&format=json\")",
-      "Bash(python -c \"import requests; d=requests.get\\('https://wiki.warframe.com/api.php',params={'action':'query','list':'categorymembers','cmtitle':'Category:Relic','cmtype':'page','cmlimit':500,'format':'json'}\\).json\\(\\); print\\([x['title'] for x in d['query']['categorymembers'] if x['title'].startswith\\('Lith A3'\\) or x['title'].startswith\\('Lith Q3'\\)]\\)\")"
+      "Bash(python -c \"import requests; d=requests.get\\('https://wiki.warframe.com/api.php',params={'action':'query','list':'categorymembers','cmtitle':'Category:Relic','cmtype':'page','cmlimit':500,'format':'json'}\\).json\\(\\); print\\([x['title'] for x in d['query']['categorymembers'] if x['title'].startswith\\('Lith A3'\\) or x['title'].startswith\\('Lith Q3'\\)]\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=parse&page=Neo_V10&prop=wikitext&format=json\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(d.keys\\(\\)\\); print\\(d.get\\('error'\\)\\); print\\(d.get\\('parse',{}\\).get\\('wikitext',{}\\).get\\('*',''\\)[:5000]\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&titles=Guandao_Prime_Blade&prop=images&format=json\")",
+      "Bash(python -c \"import json,sys; print\\(json.dumps\\(json.load\\(sys.stdin\\), indent=2\\)\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&titles=Guandao_Prime&prop=images&format=json\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); pages=d['query']['pages']; [print\\(p['images']\\) for p in pages.values\\(\\) if 'images' in p]\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); pages=d['query']['pages']; [print\\(img['title']\\) for p in pages.values\\(\\) if 'images' in p for img in p['images'] if 'Guandao' in img['title'] or 'guandao' in img['title'].lower\\(\\)]\")",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"https://wiki.warframe.com/images/thumb/GuandaoPrime.png/64px-GuandaoPrime.png\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&titles=Guandao_Prime&prop=pageimages&pithumbsize=64&format=json\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\(json.dumps\\(d['query']['pages'], indent=2\\)\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=parse&page=Neo_V10&prop=text&format=json\")",
+      "Bash(python -c \"import json,sys; d=json.load\\(sys.stdin\\); print\\('error' in d, d.get\\('error',{}\\).get\\('info','ok'\\)\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=parse&page=Guandao_Prime&prop=text&format=json&origin=*\")",
+      "Bash(python -c ' *)",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=parse&page=Forma&prop=text&format=json&origin=*\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&titles=Forma_Blueprint&redirects=1&format=json\")",
+      "Bash(python -c \"import json,sys; print\\(json.dumps\\(json.load\\(sys.stdin\\),indent=2\\)\\)\")",
+      "Bash(python -c \"import json,sys,re; h=json.load\\(sys.stdin\\)['parse']['text']['*']; m=re.search\\(r'<span class=\\\\\"main-image\\\\\".*?<img[^>]*src=\\\\\"\\([^\\\\\"]+\\)',h,re.S\\); print\\(m.group\\(1\\) if m else 'none'\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=parse&page=Inaros_Prime&prop=text&format=json&origin=*\")",
+      "Bash(python -c \"import json,sys,re; h=json.load\\(sys.stdin\\)['parse']['text']['*']; m=re.search\\(r'class=\\\\\"infobox\\\\\".*?<span class=\\\\\"main-image\\\\\".*?<img[^>]*src=\\\\\"\\([^\\\\\"]+\\)',h,re.S\\); print\\('IMAGE:', m.group\\(1\\) if m else 'none'\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&titles=Inaros_Prime&prop=info%7Cpageimages&redirects=1&pithumbsize=300&format=json\")",
+      "Bash(python -c \"import json,sys; print\\(json.dumps\\(json.load\\(sys.stdin\\),indent=2\\)[:3000]\\)\")",
+      "Bash(curl -s \"https://wiki.warframe.com/api.php?action=query&titles=Forma|Guandao_Prime|Braton_Prime|Inaros_Prime|Akbronco_Prime|Volnus_Prime&prop=pageimages&pithumbsize=300&format=json\")"
     ]
   }
 }
