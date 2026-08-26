@@ -30,8 +30,28 @@ export async function fetchAllCategory(category, type = '') {
     return members;
 }
 
-// Image cache (module-level Map persists across renders)
+// Item image cache (module-level Map persists across renders)
 const imageCache = new Map();
+const relicStatusCache = new Map();
+
+export async function fetchRelicStatus(relicName) {
+    if (relicStatusCache.has(relicName)) return relicStatusCache.get(relicName);
+
+    const page = relicName.replace(/\s+/g, '_');
+    const res = await fetch(`${WIKI_API}?action=parse&page=${encodeURIComponent(page)}&prop=text&format=json&origin=*`);
+    if (!res.ok) throw new Error(`Wiki API returned ${res.status}`);
+    const data = await res.json();
+    if (data.error) throw new Error(data.error.info || 'Wiki API error');
+
+    const html = data?.parse?.text?.['*'] || '';
+    const doc = new DOMParser().parseFromString(html, 'text/html');
+    const statusRow = doc.querySelector('.infobox > .row > .value.caption');
+    const statusText = statusRow?.textContent.trim() || '';
+    const varziaAvailable = /prime resurgence available/i.test(statusText);
+    const result = { name: relicName, vaulted: /vaulted/i.test(statusText), varziaAvailable };
+    relicStatusCache.set(relicName, result);
+    return result;
+}
 
 export async function fetchItemImages(drops) {
     const uniquePages = [...new Set(drops.map(d => d.pagePath).filter(Boolean))];

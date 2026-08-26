@@ -10,7 +10,7 @@ import { useRelicDropTable } from './hooks/useRelicDropTable';
 import './App.css';
 
 function App() {
-    const { vaultedSet, allRelics, status, stats } = useRelicData();
+    const { vaultedSet, resurgenceSet, baroSet, allRelics, status, stats } = useRelicData();
     const { isOpen, relicName, drops, loading, error, openModal, closeModal } = useRelicDropTable();
     const [activeTab, setActiveTab] = useState('single');
 
@@ -30,9 +30,9 @@ function App() {
                 <StatusBar status={status} stats={stats} />
                 <TabBar activeTab={activeTab} onChange={setActiveTab} />
 
-                {activeTab === 'single' && <SingleCheck allRelics={allRelics} vaultedSet={vaultedSet} openModal={openModal} disabled={disabled} />}
-                {activeTab === 'batch' && <BatchCheck allRelics={allRelics} vaultedSet={vaultedSet} openModal={openModal} disabled={disabled} />}
-                {activeTab === 'ocr' && <ScreenshotOCR allRelics={allRelics} vaultedSet={vaultedSet} openModal={openModal} disabled={disabled} />}
+                {activeTab === 'single' && <SingleCheck allRelics={allRelics} vaultedSet={vaultedSet} resurgenceSet={resurgenceSet} baroSet={baroSet} openModal={openModal} disabled={disabled} />}
+                {activeTab === 'batch' && <BatchCheck allRelics={allRelics} vaultedSet={vaultedSet} resurgenceSet={resurgenceSet} baroSet={baroSet} openModal={openModal} disabled={disabled} />}
+                {activeTab === 'ocr' && <ScreenshotOCR allRelics={allRelics} vaultedSet={vaultedSet} resurgenceSet={resurgenceSet} baroSet={baroSet} openModal={openModal} disabled={disabled} />}
 
                 <footer>Data from <a href="https://wiki.warframe.com" target="_blank" rel="noreferrer">WARFRAME Wiki</a> · Not affiliated with Digital Extremes</footer>
             </main>

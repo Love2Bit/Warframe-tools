@@ -407,6 +407,86 @@ textarea {
     color: #f5a623;
 }
 
+.badge-badges {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+}
+
+.badge.varzia {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    background: #a855f722;
+    color: #d8b4fe;
+    border: 1px solid #a855f755;
+}
+
+.badge.baro {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
+    background: #fbbf2422;
+    color: #fbbf24;
+    border: 1px solid #fbbf2455;
+}
+
+.badge-icon {
+    width: 16px;
+    height: 16px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.varzia-result {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    color: #d8b4fe;
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+.varzia-result img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.varzia-result.compact {
+    font-size: 0.65rem;
+}
+
+.baro-result {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    margin-left: 0.5rem;
+    color: #fbbf24;
+    font-size: 0.7rem;
+    white-space: nowrap;
+}
+
+.baro-result img {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
+.baro-result.compact {
+    font-size: 0.65rem;
+}
+
+.ocr-varzia-icon {
+    width: 18px;
+    height: 18px;
+    object-fit: contain;
+    border-radius: 50%;
+}
+
 /* OCR */
 .drop-zone {
     border: 2px dashed #333;

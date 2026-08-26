@@ -1,8 +1,11 @@
 import { useState, useEffect } from 'react';
 import { fetchAllCategory } from '../services/wikiApi';
 
+const BARO_RELICS = new Set(['Neo O1', 'Axi A2', 'Axi A5', 'Axi M5', 'Axi V8']);
+
 export function useRelicData() {
     const [vaultedSet, setVaultedSet] = useState(new Set());
+    const [resurgenceSet, setResurgenceSet] = useState(new Set());
     const [allRelics, setAllRelics] = useState([]);
     const [status, setStatus] = useState('loading');
 
@@ -11,15 +14,16 @@ export function useRelicData() {
 
         async function load() {
             try {
-                const vaulted = await fetchAllCategory('Category:Vaulted_Relics');
-                if (cancelled) return;
-                const vaultedNames = new Set(vaulted.map(r => r.title));
-                setVaultedSet(vaultedNames);
+                const [vaulted, all, resurgence] = await Promise.all([
+                    fetchAllCategory('Category:Vaulted_Relics'),
+                    fetchAllCategory('Category:Relic', 'page'),
+                    fetchAllCategory('Category:Prime_Resurgence_Offering'),
+                ]);
 
-                const all = await fetchAllCategory('Category:Relic', 'page');
                 if (cancelled) return;
-                const sorted = all.map(r => r.title).sort();
-                setAllRelics(sorted);
+                setVaultedSet(new Set(vaulted.map(r => r.title)));
+                setAllRelics(all.map(r => r.title).sort());
+                setResurgenceSet(new Set(resurgence.map(r => r.title)));
                 setStatus('ready');
             } catch (err) {
                 console.error('Failed to load relic data:', err);
@@ -35,6 +39,8 @@ export function useRelicData() {
 
     return {
         vaultedSet,
+        resurgenceSet,
+        baroSet: BARO_RELICS,
         allRelics,
         status,
         stats: status === 'ready'

@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react';
 import { useOCR } from '../hooks/useOCR';
+import varziaIcon from '../assets/varzia.webp';
+import baroIcon from '../assets/Baro.webp';
 
-export default function ScreenshotOCR({ allRelics, vaultedSet, openModal, disabled }) {
+export default function ScreenshotOCR({ allRelics, vaultedSet, resurgenceSet, baroSet, openModal, disabled }) {
     const { processFile, detectedRelics, removeRelic, switchCandidate, ocrState, previewUrl, progress, rawText } = useOCR(allRelics);
     const [dragover, setDragover] = useState(false);
     const [checkedRows, setCheckedRows] = useState([]);
@@ -33,8 +35,12 @@ export default function ScreenshotOCR({ allRelics, vaultedSet, openModal, disabl
                 <div className="ocr-tag-list">
                     {detectedRelics.map((r, idx) => {
                         const vaulted = vaultedSet.has(r.name);
+                        const varzia = resurgenceSet?.has(r.name);
+                        const baro = baroSet?.has(r.name);
                         return <span className={`ocr-tag ${vaulted ? 'matched' : 'unmatched'} ${r.ambiguous ? 'ambiguous' : ''}`} key={`${r.name}-${idx}`}>
                             {r.name} {r.condition && <span className="ocr-condition">[{r.condition}]</span>}
+                            {baro && <img src={baroIcon} alt="Baro" className="ocr-varzia-icon" />}
+                            {varzia && <img src={varziaIcon} alt="Varzia" className="ocr-varzia-icon" />}
                             <span style={{ fontSize: '0.65rem', color: vaulted ? '#f44336' : '#4caf50' }}>{vaulted ? 'VAULTED' : 'ACTIVE'}</span>
                             {r.corrected && <span style={{ fontSize: '0.65rem', color: '#f5a623' }}>(was: {r.original})</span>}
                             <span className="ocr-tag-remove" onClick={() => removeRelic(idx)}>×</span>
@@ -45,7 +51,14 @@ export default function ScreenshotOCR({ allRelics, vaultedSet, openModal, disabl
                 <button className="btn" onClick={checkDetected}>Check Detected Relics</button>
             </div>}
             {checkedRows.length > 0 && <div className="batch-results">
-                <table><thead><tr><th>Relic</th><th>Status</th></tr></thead><tbody>{checkedRows.map((r, i) => <tr key={`${r.display}-${i}`}><td><span className="clickable-relic" onClick={() => openModal(r.match)}>{r.display}</span>{r.corrected && <small> (was: {r.original})</small>}</td><td><span className={`batch-badge ${r.status}`}>{r.statusText}</span></td></tr>)}</tbody></table>
+                <table><thead><tr><th>Relic</th><th>Status</th></tr></thead><tbody>{checkedRows.map((r, i) => {
+                    const varzia = resurgenceSet?.has(r.match);
+                    const baro = baroSet?.has(r.match);
+                    return <tr key={`${r.display}-${i}`}>
+                        <td><span className="clickable-relic" onClick={() => openModal(r.match)}>{r.display}</span>{baro && <span className="baro-result compact"><img src={baroIcon} alt="" /> Baro</span>}{varzia && <span className="varzia-result compact"><img src={varziaIcon} alt="" /> Varzia</span>}{r.corrected && <small> (was: {r.original})</small>}</td>
+                        <td><span className={`batch-badge ${r.status}`}>{r.statusText}</span></td>
+                    </tr>;
+                })}</tbody></table>
                 <div className="batch-stats"><div><span style={{ color: '#f44336' }}>{checkedRows.filter(r => r.status === 'vaulted').length}</span> vaulted</div><div><span style={{ color: '#4caf50' }}>{checkedRows.filter(r => r.status === 'active').length}</span> active</div></div>
             </div>}
         </div>
