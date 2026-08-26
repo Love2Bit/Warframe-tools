@@ -378,6 +378,8 @@ textarea {
 .drop-cell.empty { background: #111118; }
 
 .drop-cell .material-image {
+    position: relative;
+    z-index: 1;
     width: 120px;
     height: 120px;
     border-radius: 8px;
@@ -387,6 +389,7 @@ textarea {
 
 .drop-cell .item-thumbnail {
     position: absolute;
+    z-index: 2;
     top: 6px;
     right: 6px;
     width: 42px;
