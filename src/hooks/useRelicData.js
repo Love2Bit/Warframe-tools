@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { fetchAllCategory } from '../services/wikiApi';
+import { getAllRelicNames, getVaultedRelics } from '../services/warframeItems';
 
 const BARO_RELICS = new Set(['Neo O1', 'Axi A2', 'Axi A5', 'Axi M5', 'Axi V8']);
 
@@ -14,17 +15,18 @@ export function useRelicData() {
 
         async function load() {
             try {
-                const [vaulted, all, resurgence] = await Promise.all([
-                    fetchAllCategory('Category:Vaulted_Relics'),
-                    fetchAllCategory('Category:Relic', 'page'),
-                    fetchAllCategory('Category:Prime_Resurgence_Offering'),
-                ]);
-
+                // Step 1: instant vaulted data from warframe-items
+                const names = getAllRelicNames();
+                const vaulted = getVaultedRelics();
                 if (cancelled) return;
-                setVaultedSet(new Set(vaulted.map(r => r.title)));
-                setAllRelics(all.map(r => r.title).sort());
-                setResurgenceSet(new Set(resurgence.map(r => r.title)));
+                setAllRelics(names.sort());
+                setVaultedSet(new Set(vaulted));
                 setStatus('ready');
+
+                // Step 2: wiki category for Varzia in background (fast)
+                const resurgence = await fetchAllCategory('Category:Prime_Resurgence_Offering');
+                if (cancelled) return;
+                setResurgenceSet(new Set(resurgence.map(r => r.title)));
             } catch (err) {
                 console.error('Failed to load relic data:', err);
                 if (!cancelled) setStatus('error');

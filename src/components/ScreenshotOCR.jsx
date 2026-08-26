@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useOCR } from '../hooks/useOCR';
 import varziaIcon from '../assets/varzia.webp';
 import baroIcon from '../assets/Baro.webp';
@@ -12,6 +12,20 @@ export default function ScreenshotOCR({ allRelics, vaultedSet, resurgenceSet, ba
         if (file?.type.startsWith('image/')) processFile(file);
     }, [processFile]);
 
+    // Global paste handler for image screenshots
+    useEffect(() => {
+        const handlePaste = (event) => {
+            const imageItem = [...event.clipboardData.items].find(item => item.type.startsWith('image/'));
+            if (imageItem) {
+                event.preventDefault();
+                const file = imageItem.getAsFile();
+                if (file) onFile(file);
+            }
+        };
+        window.addEventListener('paste', handlePaste);
+        return () => window.removeEventListener('paste', handlePaste);
+    }, [onFile]);
+
     const checkDetected = () => {
         setCheckedRows(detectedRelics.map(r => {
             const vaulted = vaultedSet.has(r.name);
@@ -24,8 +38,8 @@ export default function ScreenshotOCR({ allRelics, vaultedSet, resurgenceSet, ba
             <div className={`drop-zone ${dragover ? 'dragover' : ''}`} onDragOver={e => { e.preventDefault(); setDragover(true); }} onDragLeave={() => setDragover(false)} onDrop={e => { e.preventDefault(); setDragover(false); onFile(e.dataTransfer.files[0]); }}>
                 <input type="file" accept="image/*" onChange={e => onFile(e.target.files[0])} disabled={disabled} />
                 <div className="drop-zone-icon">📸</div>
-                <div className="drop-zone-text">Drop a screenshot or click to upload</div>
-                <div className="drop-zone-hint">Supports PNG, JPG — Warframe inventory screenshots</div>
+                <div className="drop-zone-text">Drop, upload, or paste a screenshot</div>
+                <div className="drop-zone-hint">Supports PNG, JPG — or press Ctrl+V to paste a Warframe inventory screenshot</div>
             </div>
             {previewUrl && <div className="ocr-preview show"><img src={previewUrl} alt="Screenshot preview" /></div>}
             {ocrState !== 'idle' && <div className="ocr-progress show"><div className="ocr-progress-bar"><div className="ocr-progress-fill" style={{ width: `${progress.percent}%` }} /></div><div className="ocr-progress-text">{progress.status}</div></div>}

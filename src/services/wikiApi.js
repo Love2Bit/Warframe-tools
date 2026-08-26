@@ -1,3 +1,5 @@
+import { getMaterialKey } from './materialAssets';
+
 const WIKI_API = 'https://wiki.warframe.com/api.php';
 
 export async function fetchJSON(url) {
@@ -101,7 +103,15 @@ export async function fetchItemImages(drops) {
 export function parseDropTable(html) {
     const parser = new DOMParser();
     const doc = parser.parseFromString(html, 'text/html');
-    const table = doc.querySelector('table.wikitable');
+
+    // Select the correct table: must have headers for Component, Ducat Value, and Rarity.
+    // Some pages (e.g. Baro relics) have multiple wikitable elements.
+    const table = [...doc.querySelectorAll('table.wikitable')].find(table => {
+        const headers = [...table.querySelectorAll('th')].map(th => th.textContent.trim().toLowerCase());
+        return headers.includes('component')
+            && headers.some(h => h.includes('ducat value'))
+            && headers.some(h => h.includes('rarity'));
+    });
     if (!table) return [];
 
     const drops = [];
@@ -131,7 +141,7 @@ export function parseDropTable(html) {
         }
 
         if (itemName && currentRarity) {
-            drops.push({ name: itemName, img: imgSrc, ducats, rarity: currentRarity, pagePath });
+            drops.push({ name: itemName, img: imgSrc, ducats, rarity: currentRarity, pagePath, materialKey: getMaterialKey(itemName) });
         }
     }
     return drops;

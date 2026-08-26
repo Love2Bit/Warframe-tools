@@ -15,6 +15,7 @@ export function useRelicDropTable() {
         setError(null);
         setDrops([]);
 
+        // Always use wiki API for drop table — it has item images
         try {
             const rawDrops = await fetchRelicDropTable(name);
             const enriched = await fetchItemImages(rawDrops);

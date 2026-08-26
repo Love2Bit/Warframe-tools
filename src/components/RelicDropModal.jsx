@@ -1,3 +1,15 @@
+import { MATERIAL_MAP } from '../services/materialAssets';
+import commonIcon from '../assets/Relic Rarity/IconCommon.webp';
+import uncommonIcon from '../assets/Relic Rarity/IconUncommon.webp';
+import rareIcon from '../assets/Relic Rarity/IconRare.webp';
+import ducatsIcon from '../assets/Relic Rarity/OrokinDucats.png';
+
+const RARITY_ICONS = {
+    Common: commonIcon,
+    Uncommon: uncommonIcon,
+    Rare: rareIcon,
+};
+
 export default function RelicDropModal({ isOpen, relicName, drops, loading, error, onClose }) {
     if (!isOpen) return null;
 
@@ -24,12 +36,20 @@ export default function RelicDropModal({ isOpen, relicName, drops, loading, erro
                                 if (!drop) return <div key={`empty-${idx}`} className="drop-cell empty" />;
                                 const rarityClass = `rarity-${drop.rarity.toLowerCase()}`;
                                 const fullImg = drop.img?.startsWith('http') ? drop.img : `https://wiki.warframe.com${drop.img}`;
+                                const materialSrc = drop.materialKey ? MATERIAL_MAP[drop.materialKey] : null;
                                 return (
                                     <div key={`${drop.name}-${idx}`} className="drop-cell">
-                                        <img src={fullImg} alt={drop.name} loading="lazy" />
+                                        {materialSrc ? (
+                                            <>
+                                                <img className="item-thumbnail" src={fullImg} alt={drop.name} loading="lazy" />
+                                                <img className="material-image" src={materialSrc} alt={`${drop.name} material`} loading="lazy" />
+                                            </>
+                                        ) : (
+                                            <img className="material-image" src={fullImg} alt={drop.name} loading="lazy" />
+                                        )}
                                         <div className="item-name">{drop.name}</div>
-                                        <span className={`item-rarity ${rarityClass}`}>{drop.rarity}</span>
-                                        {drop.ducats > 0 && <div className="item-ducats">💎 {drop.ducats}</div>}
+                                        {RARITY_ICONS[drop.rarity] && <img className="item-rarity-icon" src={RARITY_ICONS[drop.rarity]} alt={drop.rarity} />}
+                                        {drop.ducats > 0 && <div className="item-ducats"><img className="ducats-icon" src={ducatsIcon} alt="Ducats" /> {drop.ducats}</div>}
                                     </div>
                                 );
                             })}
