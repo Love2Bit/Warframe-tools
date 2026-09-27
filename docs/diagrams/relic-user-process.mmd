@@ -1,0 +1,81 @@
+%% Relic — end-to-end item inventory and selling process
+%% Render with: npx @mermaid-js/mermaid-cli -i relic-user-process.mmd -o relic-user-process.svg
+%% This version uses subgraphs and a left-to-right flow so labels stay readable.
+flowchart LR
+    start([User wants to\ntrade an item]) --> choose{How will\nyou provide items?}
+
+    subgraph INPUT[1. Capture inventory]
+        direction TB
+        type[Type or paste\nitem names]
+        screenshot[Upload inventory\nscreenshot]
+        type --> normalize[Normalize names\nand quantities]
+        screenshot --> preprocess[Preprocess image]
+        preprocess --> ocr[OCR reads\nitem text]
+        ocr --> review[Review, remove,\nor correct matches]
+        review --> normalize
+    end
+
+    choose -->|names| type
+    choose -->|screenshot| screenshot
+
+    subgraph CATALOG[2. Resolve against catalogue]
+        direction TB
+        match[Match each item\nto catalogue]
+        kind{What kind\nof item?}
+        relic[Void relic]
+        prime[Prime part<br/>or blueprint]
+        mod[Mod / riven\nor other tradeable]
+        unknown[Not found or\nneeds correction]
+        match --> kind
+        kind -->|relic| relic
+        kind -->|prime item| prime
+        kind -->|mod / other| mod
+        kind -->|no match| unknown
+    end
+
+    normalize --> match
+    unknown --> correct[Choose suggestion\nor fix spelling]
+    correct --> match
+
+    subgraph ENRICH[3. Enrich item data]
+        direction TB
+        status[Read status:\nowned, quantity, vaulted]
+        price[Fetch market data:\nprice, volume, platform]
+        drops[For relics:\nfetch drop table]
+        status --> price
+        status --> drops
+    end
+
+    relic --> status
+    prime --> status
+    mod --> status
+
+    subgraph ACTION[4. Decide what to do]
+        direction TB
+        inventory[Show tradeable\npersonal inventory]
+        select[Select item +\nquantity to sell]
+        confirm[Review price,\nquantity, and listing]
+        listing[Create listing\nwith user approval]
+        inventory --> select
+        select --> confirm
+        confirm --> listing
+    end
+
+    price --> inventory
+    drops --> inventory
+    listing --> end([Listing created])
+
+    classDef start fill:#f0b429,stroke:#7a5900,color:#222,stroke-width:2px;
+    classDef input fill:#3a7cbd,stroke:#124b80,color:#fff,stroke-width:2px;
+    classDef process fill:#6b3fa0,stroke:#3b1d5e,color:#fff,stroke-width:2px;
+    classDef decision fill:#d68a20,stroke:#7a4400,color:#222,stroke-width:2px;
+    classDef data fill:#2d7a5a,stroke:#144b36,color:#fff,stroke-width:2px;
+    classDef result fill:#238b73,stroke:#0f4a3d,color:#fff,stroke-width:2px;
+    classDef warning fill:#a0454e,stroke:#63252c,color:#fff,stroke-width:2px;
+
+    class start,end start;
+    class type,screenshot input;
+    class normalize,preprocess,ocr,review,match,relic,prime,mod,status,price,drops,inventory,select,confirm,listing process;
+    class choose,kind decision;
+    class unknown,correct warning;
+    class INPUT,CATALOG,ENRICH,ACTION data;

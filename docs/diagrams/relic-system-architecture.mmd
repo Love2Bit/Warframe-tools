@@ -1,0 +1,45 @@
+%% Relic — system architecture
+%% Render with: npx @mermaid-js/mermaid-cli -i relic-system-architecture.mmd -o relic-system-architecture.svg
+flowchart LR
+    user([User])
+    app[[Relic web app]]
+    single[Single check]
+    batch[Batch check]
+    ocr[Screenshot OCR]
+    inventory[(Personal inventory)]
+    match{{Relic matching\n& normalization}}
+    vault[(Vault status\nlocal state)]
+    drops[Drop table modal]
+    wiki[(WARFRAME Wiki\nAPI)]
+    sell[Future: sell listing\n/ Warframe Market]
+
+    user --> app
+    app --> single
+    app --> batch
+    app --> ocr
+    single --> match
+    batch --> match
+    ocr -->|image upload| match
+    ocr -.->|Tesseract.js\ntext extraction| match
+    match --> vault
+    match --> inventory
+    app --> drops
+    drops --> wiki
+    vault -->|active / vaulted| app
+    inventory -->|future: owned items| app
+    app --> sell
+    sell -.->|requires listing API\nauth + user approval| user
+    wiki -->|relic list +\nvaulted category| vault
+    wiki -->|drop tables +\nitem images| drops
+
+    classDef actor fill:#f0b429,stroke:#f7d070,color:#333,stroke-width:2px;
+    classDef ui fill:#3a7cbd,stroke:#90c4ed,color:#fff,stroke-width:2px;
+    classDef logic fill:#6b3fa0,stroke:#c084fc,color:#fff,stroke-width:2px;
+    classDef data fill:#2d7a5a,stroke:#6ee7a0,color:#fff,stroke-width:2px;
+    classDef future fill:#a0454e,stroke:#f28f8f,color:#fff,stroke-width:2px,stroke-dasharray:5 5;
+
+    class user actor;
+    class app,single,batch,ocr,drops ui;
+    class match logic;
+    class inventory,vault,wiki data;
+    class sell future;
