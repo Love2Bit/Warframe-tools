@@ -23,10 +23,25 @@ export function useRelicData() {
                 setVaultedSet(new Set(vaulted));
                 setStatus('ready');
 
-                // Step 2: wiki category for Varzia in background (fast)
-                const resurgence = await fetchAllCategory('Category:Prime_Resurgence_Offering');
+                // Step 2: wiki background refresh — picks up relics released
+                // after the generated snapshot without needing a rebuild.
+                const [resurgence, wikiRelics, wikiVaulted] = await Promise.all([
+                    fetchAllCategory('Category:Prime_Resurgence_Offering'),
+                    fetchAllCategory('Category:Relic'),
+                    fetchAllCategory('Category:Vaulted_Relics'),
+                ]);
                 if (cancelled) return;
                 setResurgenceSet(new Set(resurgence.map(r => r.title)));
+
+                // Wiki returns utility subpages (Void Relic/ByDucats etc.) — keep only real relics.
+                const isRelicPage = t => !t.includes('/') && t !== 'Void Relic';
+                const wikiNames = wikiRelics.map(r => r.title).filter(isRelicPage);
+                setAllRelics(prev => [...new Set([...prev, ...wikiNames])].sort());
+                setVaultedSet(prev => {
+                    const next = new Set(prev);
+                    for (const r of wikiVaulted) if (isRelicPage(r.title)) next.add(r.title);
+                    return next;
+                });
             } catch (err) {
                 console.error('Failed to load relic data:', err);
                 if (!cancelled) setStatus('error');
