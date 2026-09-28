@@ -36,12 +36,19 @@ export function useRelicData() {
                 // Wiki returns utility subpages (Void Relic/ByDucats etc.) — keep only real relics.
                 const isRelicPage = t => !t.includes('/') && t !== 'Void Relic';
                 const wikiNames = wikiRelics.map(r => r.title).filter(isRelicPage);
-                setAllRelics(prev => [...new Set([...prev, ...wikiNames])].sort());
-                setVaultedSet(prev => {
-                    const next = new Set(prev);
-                    for (const r of wikiVaulted) if (isRelicPage(r.title)) next.add(r.title);
-                    return next;
-                });
+
+                const merged = [...new Set([...names, ...wikiNames])].sort();
+                setAllRelics(merged);
+
+                // The wiki's vaulted category is authoritative — it replaces the static
+                // snapshot's flags rather than unioning with them, so relics unvaulted
+                // (or vaulted) since the last data generation report correctly.
+                const known = new Set(merged);
+                setVaultedSet(new Set(
+                    wikiVaulted
+                        .map(r => r.title)
+                        .filter(t => isRelicPage(t) && known.has(t))
+                ));
             } catch (err) {
                 console.error('Failed to load relic data:', err);
                 if (!cancelled) setStatus('error');
